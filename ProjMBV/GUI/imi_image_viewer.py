@@ -27,7 +27,7 @@ except ImportError as e:
 from GUI.viewer_utils import add_mask_to_image, get_aspect_ratio_for_plane, compatible_metadata, index_compatibility, \
     get_3d_plane_index, ImageMask, ImageMarker
 
-mpl.rcParams['image.origin'] = 'lower'
+mpl.rcParams['image.origin'] = 'upper'
 mpl.rcParams['image.cmap'] = 'gray'
 
 
@@ -220,6 +220,23 @@ class ImageViewerWidget(QtWidgets.QWidget):
         if image_data is None:
             # create an empty 3d image
             image_data = sitk.GetImageFromArray(np.zeros((1, 1, 1)))
+        elif image_data.GetDimension() == 2:
+            # convert the image to 3D (while also copying the given metadata)
+            data_array = np.expand_dims(sitk.GetArrayFromImage(image_data), axis=0)
+
+            spacing = (*image_data.GetSpacing(), 1.0)
+            origin = (*image_data.GetOrigin(), 0.0)
+            direction = (image_data.GetDirection())
+            direction = (*direction[0:2], 0.0, *direction[2:4], 0.0, 0.0, 0.0, 1.0)
+
+            image_data = sitk.GetImageFromArray(data_array)
+
+            image_data.SetSpacing(spacing)
+            image_data.SetOrigin(origin)
+            image_data.SetDirection(direction)
+
+        elif image_data.GetDimension() not in (2, 3):
+            raise ValueError('Image Viewer does not support {}-dimensional images'.format(image_data.GetDimension()))
 
         # init attributes
         self.image = image_data  # the SimpleITK image in the viewer
@@ -310,7 +327,7 @@ class ImageViewerWidget(QtWidgets.QWidget):
             self.im_plot.remove()
 
         self.im_plot = self.ax.imshow(self.image_array[index_compatibility(get_3d_plane_index(self.current_slice, self.orientation))],
-                                      aspect=get_aspect_ratio_for_plane(self.image.GetSpacing(), self.orientation, self.image.GetSize()))
+                                      aspect=get_aspect_ratio_for_plane(self.image.GetSpacing(), self.orientation))
 
         # set the window/level to span the whole greyvalue range of the image
         min_grey = self.image_array.min()
@@ -417,7 +434,7 @@ class ImageViewerWidget(QtWidgets.QWidget):
         # setting data on the current image plot, but this way the extent is updated correctly
         self.im_plot.remove()
         self.im_plot = self.ax.imshow(img_slice, vmin=self.current_level - half_window, vmax=self.current_level + half_window,
-                                      aspect=get_aspect_ratio_for_plane(self.image.GetSpacing(), self.orientation, self.image.GetSize()))
+                                      aspect=get_aspect_ratio_for_plane(self.image.GetSpacing(), self.orientation))
 
         # update the coordinate text
         self.pixel_info_label.set_coordinate(self.orientation, self.current_slice)
@@ -536,7 +553,7 @@ class ImageViewerWidget(QtWidgets.QWidget):
         # draw each mask (no changes to canvas before canvas.draw() is called)
         for m in self.masks.keys():
             self.masks[m] = add_mask_to_image(self.ax, m.get_slice(self.current_slice, self.orientation),
-                                              aspect=get_aspect_ratio_for_plane(m.get_spacing(), self.orientation, self.image.GetSize()),
+                                              aspect=get_aspect_ratio_for_plane(m.get_spacing(), self.orientation),
                                               alpha=m.alpha, color=m.color)
 
     def clear_mask_plots(self):
