@@ -343,6 +343,20 @@ class ImageViewerWidget(QtWidgets.QWidget):
         # init the slider with the correct range
         self.adapt_slider()
 
+    def hole_filling(self):
+        holeFilter = sitk.VotingBinaryIterativeHoleFillingImageFilter()
+        holeFilter.SetForegroundValue(1)
+        holeFilter.SetBackgroundValue(0)
+        holeFilter.SetRadius(1)
+        holeFilter.SetMaximumNumberOfIterations(10)
+        self.image = holeFilter.Execute(self.image)
+
+        self.image_array = sitk.GetArrayFromImage(self.image)
+        self.redraw_slice()
+        #self.adapt_slider()
+        #self.canvas.draw()
+        #self.repaint()
+
     def change_orientation(self, orientation: Union[int, str]):
         """ Change the slicing dimension of the viewer.
         Orientation values are expected as in SLICE_ORIENTATION
@@ -709,6 +723,8 @@ class ImageViewerInteractor:
         elif event.key == 'pagedown':
             # emulate the page-down behaviour of the QSlider (as this is never focused)
             self.iv.move_slice(- self.iv.slice_slider.pageStep())
+        elif event.key == 'f': # fill holes
+            self.iv.hole_filling()
 
     def handle_mouse_button_down(self, event: mpl.backend_bases.MouseEvent):
         """ Handles mouse button down events by distributing event to
