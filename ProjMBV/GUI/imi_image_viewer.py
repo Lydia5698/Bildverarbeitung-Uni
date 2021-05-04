@@ -344,18 +344,21 @@ class ImageViewerWidget(QtWidgets.QWidget):
         self.adapt_slider()
 
     def hole_filling(self):
-        holeFilter = sitk.VotingBinaryIterativeHoleFillingImageFilter()
-        holeFilter.SetForegroundValue(1)
-        holeFilter.SetBackgroundValue(0)
-        holeFilter.SetRadius(1)
-        holeFilter.SetMaximumNumberOfIterations(10)
-        self.image = holeFilter.Execute(self.image)
+        """ The holes in the segmentation will be filled when the f key is pressed.
+            This functionality is only useful for the image "segmentation"!
+        """
+        hole_filter = sitk.VotingBinaryIterativeHoleFillingImageFilter()
+        hole_filter.SetForegroundValue(1)
+        hole_filter.SetBackgroundValue(0)
+        hole_filter.SetRadius(1)
+        hole_filter.SetMaximumNumberOfIterations(10)
+        self.image = hole_filter.Execute(self.image)
 
         self.image_array = sitk.GetArrayFromImage(self.image)
         self.redraw_slice()
-        #self.adapt_slider()
-        #self.canvas.draw()
-        #self.repaint()
+        writer = sitk.ImageFileWriter()
+        writer.SetFileName('segmentation.nii.gz')
+        writer.Execute(self.image)
 
     def change_orientation(self, orientation: Union[int, str]):
         """ Change the slicing dimension of the viewer.
