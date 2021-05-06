@@ -1,0 +1,6 @@
+Im normalisierten Bereich Saatpunkte setzen
+ODER im Histogramm nach den perzentilen zu schauen
+
+ODER
+
+mit statistic filter den größten zusammenhängenden Bereich auswählen
