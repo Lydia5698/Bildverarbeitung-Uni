@@ -343,6 +343,23 @@ class ImageViewerWidget(QtWidgets.QWidget):
         # init the slider with the correct range
         self.adapt_slider()
 
+    def hole_filling(self):
+        """ The holes in the segmentation will be filled when the f key is pressed.
+            This functionality is only useful for the image "segmentation"!
+        """
+        hole_filter = sitk.VotingBinaryIterativeHoleFillingImageFilter()
+        hole_filter.SetForegroundValue(1)
+        hole_filter.SetBackgroundValue(0)
+        hole_filter.SetRadius(1)
+        hole_filter.SetMaximumNumberOfIterations(10)
+        self.image = hole_filter.Execute(self.image)
+
+        self.image_array = sitk.GetArrayFromImage(self.image)
+        self.redraw_slice()
+        writer = sitk.ImageFileWriter()
+        writer.SetFileName('segmentation.nii.gz')
+        writer.Execute(self.image)
+
     def change_orientation(self, orientation: Union[int, str]):
         """ Change the slicing dimension of the viewer.
         Orientation values are expected as in SLICE_ORIENTATION
@@ -709,6 +726,8 @@ class ImageViewerInteractor:
         elif event.key == 'pagedown':
             # emulate the page-down behaviour of the QSlider (as this is never focused)
             self.iv.move_slice(- self.iv.slice_slider.pageStep())
+        elif event.key == 'f': # fill holes
+            self.iv.hole_filling()
 
     def handle_mouse_button_down(self, event: mpl.backend_bases.MouseEvent):
         """ Handles mouse button down events by distributing event to
