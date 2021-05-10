@@ -12,6 +12,7 @@ from matplotlib.backend_bases import cursors
 from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.qt_compat import QtCore, QtWidgets
 from matplotlib.figure import Figure
+import additional_filter as add_filter
 
 try:
     from matplotlib.backend_bases import MouseButton
@@ -344,21 +345,59 @@ class ImageViewerWidget(QtWidgets.QWidget):
         self.adapt_slider()
 
     def hole_filling(self):
-        """ The holes in the segmentation will be filled when the f key is pressed.
-            This functionality is only useful for the image "segmentation"!
-        """
-        hole_filter = sitk.VotingBinaryIterativeHoleFillingImageFilter()
-        hole_filter.SetForegroundValue(1)
-        hole_filter.SetBackgroundValue(0)
-        hole_filter.SetRadius(1)
-        hole_filter.SetMaximumNumberOfIterations(10)
-        self.image = hole_filter.Execute(self.image)
+        """ filling holes in self.image
 
+        The holes in the segmentation will be filled when the f key is pressed.
+        This functionality is only useful for the image "segmentation"!
+        """
+
+        self.image = add_filter.hole_filling(self.image)
         self.image_array = sitk.GetArrayFromImage(self.image)
         self.redraw_slice()
-        writer = sitk.ImageFileWriter()
-        writer.SetFileName('segmentation.nii.gz')
-        writer.Execute(self.image)
+
+    def opening(self):
+        """ perform opening on self.image
+
+        This method performs an opening on self.image when the o key is pressed.
+        This functionality is only useful for the image "segmentation"!
+        """
+
+        self.image = add_filter.opening(self.image)
+        self.image_array = sitk.GetArrayFromImage(self.image)
+        self.redraw_slice()
+
+    def closing(self):
+        """ perform closing on self.image
+
+        This method performs a closing on self.image when the c key is pressed.
+        This functionality is only useful for the image "segmentation"!
+        """
+
+        self.image = add_filter.closing(self.image)
+        self.image_array = sitk.GetArrayFromImage(self.image)
+        self.redraw_slice()
+
+    def erode(self):
+        """ erode self.image
+
+        This method erodes self.image when the e key is pressed.
+        This functionality is only useful for the image "segmentation"!
+        """
+
+        self.image = add_filter.erode(self.image)
+        self.image_array = sitk.GetArrayFromImage(self.image)
+        self.redraw_slice()
+
+    def dilate(self):
+        """ dilate self.image
+
+        This method dilates self.image when the d key is pressed.
+        This functionality is only useful for the image "segmentation"!
+        """
+
+        self.image = add_filter.dilate(self.image)
+        self.image_array = sitk.GetArrayFromImage(self.image)
+        self.redraw_slice()
 
     def change_orientation(self, orientation: Union[int, str]):
         """ Change the slicing dimension of the viewer.
@@ -728,6 +767,14 @@ class ImageViewerInteractor:
             self.iv.move_slice(- self.iv.slice_slider.pageStep())
         elif event.key == 'f': # fill holes
             self.iv.hole_filling()
+        elif event.key == 'o': # opening on image
+            self.iv.opening()
+        elif event.key == 'c': # closing on the image
+            self.iv.closing()
+        elif event.key == 'e': # erode the image
+            self.iv.erode()
+        elif event.key == 'd': # dilate the image
+            self.iv.dilate()
 
     def handle_mouse_button_down(self, event: mpl.backend_bases.MouseEvent):
         """ Handles mouse button down events by distributing event to
