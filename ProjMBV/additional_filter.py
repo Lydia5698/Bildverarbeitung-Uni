@@ -66,7 +66,7 @@ def threshold(image: sitk.Image, seeds: List[List[int]]) -> sitk.Image:
 
     thresh_filter = sitk.ConnectedThresholdImageFilter()
     thresh_filter.SetSeedList(seeds)
-    thresh_filter.SetLower(200)
+    thresh_filter.SetLower(480)
     thresh_filter.SetUpper(500)
     return thresh_filter.Execute(image)
 
