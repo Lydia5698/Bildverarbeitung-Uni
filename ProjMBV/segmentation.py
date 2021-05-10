@@ -96,3 +96,13 @@ else:
 
     # show the input_image with the segmentation
     vis.show_image_with_mask(input_image, relabel_image, 'DWI segmentation with image', 'b', False)
+
+
+#load given segmentation
+path = 'ISLES2015_Train/'+sys.argv[1]+'/VSD.Brain.'+sys.argv[1]+'.O.OT_reg.nii.gz'
+seg_image = sitk.ReadImage(path)
+
+#calculate Dice from our segmentation and given segmentation
+measures = sitk.LabelOverlapMeasuresImageFilter()
+measures.Execute(relabel_image,seg_image)
+print("Dice: ", measures.GetDiceCoefficient())
