@@ -1,10 +1,13 @@
 import SimpleITK as sitk
+import numpy as np
+
 import image_viewing as vis
 from typing import List
 
 
 def normalise(image: sitk.Image) -> sitk.Image:
     """ Normalises the image to (0, 500) and cuts of the edges.
+    It will use the 5th and 99th percentile to cut of the edges.
     This method is only used by the segmentation pipeline.
         Parameters:
             image (sitk.Image): brain-MRT image
@@ -13,13 +16,16 @@ def normalise(image: sitk.Image) -> sitk.Image:
 
     stat_filter = sitk.StatisticsImageFilter()
     stat_filter.Execute(image)
-    max = stat_filter.GetMaximum()
-    min = stat_filter.GetMinimum()
+
+    img_array = sitk.GetArrayFromImage(image)
+    lower_percentile = np.percentile(img_array, 5)
+    upper_percentile = np.percentile(img_array, 99)
+
     window_filter = sitk.IntensityWindowingImageFilter()
     window_filter.SetOutputMaximum(500)
     window_filter.SetOutputMinimum(0)
-    window_filter.SetWindowMaximum(max - 5)
-    window_filter.SetWindowMinimum(min + 5)
+    window_filter.SetWindowMaximum(upper_percentile)
+    window_filter.SetWindowMinimum(lower_percentile)
     return window_filter.Execute(image)
 
 
