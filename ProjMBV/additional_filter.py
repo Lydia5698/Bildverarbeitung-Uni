@@ -44,14 +44,15 @@ def gradient(image: sitk.Image) -> sitk.Image:
 
 def seedpoints(image: sitk.Image) -> List[List[int]]:
     """ Gets seedpoints of the image.
+    It will use every pixel where the intensity is above 490.
     This method is only used by the segmentation pipeline.
         Parameters:
             image (sitk.Image): brain-MRT image
         Returns: List of indexes of seedpoints.
     """
-
-    # TODO: get seedpoints automatically
-    return vis.show_and_return_markers(image, 'Set Seedpoints')
+    img_arr = np.array(sitk.GetArrayFromImage(image))
+    seeds = np.argwhere(img_arr > 490)
+    return seeds
 
 
 def threshold(image: sitk.Image, seeds: List[List[int]]) -> sitk.Image:
