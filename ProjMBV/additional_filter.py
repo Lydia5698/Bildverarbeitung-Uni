@@ -52,7 +52,7 @@ def seedpoints(image: sitk.Image) -> List[List[int]]:
     """
     img_arr = np.array(sitk.GetArrayFromImage(image))
     seeds = np.argwhere(img_arr > 490)
-    return seeds
+    return seeds.tolist()
 
 
 def threshold(image: sitk.Image, seeds: List[List[int]]) -> sitk.Image:
