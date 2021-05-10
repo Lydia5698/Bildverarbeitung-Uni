@@ -101,13 +101,17 @@ else:
 #load given segmentation
 path = 'ISLES2015_Train/'+sys.argv[1]+'/VSD.Brain.'+sys.argv[1]+'.O.OT_reg.nii.gz'
 seg_image = sitk.ReadImage(path)
+#cast segmentation
+cast = sitk.CastImageFilter()
+cast.SetOutputPixelType(sitk.sitkInt32)
+casted_seg_image = cast.Execute(seg_image)
 
 #calculate Dice from our segmentation and given segmentation
 measures = sitk.LabelOverlapMeasuresImageFilter()
 hausdorff_Distance = sitk.HausdorffDistanceImageFilter()
 
-measures.Execute(relabel_image, seg_image)
-hausdorff_Distance.Execute(seg_image, relabel_image)
+measures.Execute(relabel_image, casted_seg_image)
+hausdorff_Distance.Execute(relabel_image, casted_seg_image)
 print("Dice: ", measures.GetDiceCoefficient())
 print("Jaccard: ", measures.GetJaccardCoefficient())
 print("Hausdorff: ", hausdorff_Distance.GetHausdorffDistance())
