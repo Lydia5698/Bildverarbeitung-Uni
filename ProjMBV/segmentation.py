@@ -8,6 +8,11 @@ assert len(sys.argv) > 1, 'No input image specified!'
 
 # load example image from argv
 input_image = sitk.ReadImage(sys.argv[1])
+
+# load segmentation to get dice
+seg_image = sitk.ReadImage(sys.argv[2])
+
+
 #vis.show_image(input_image, 'input', False)
 
 # normalise image to [0,500] and remove measurement errors between (min, min+5) and (max-5,max)
@@ -27,11 +32,13 @@ vis.show_image(normalised_image, 'normalised', False)
 grad_filter = sitk.GradientAnisotropicDiffusionImageFilter()  #schon etwas zeitintensiv
 grad_filter.SetTimeStep(0.05)
 grad_image = grad_filter.Execute(sitk.Cast(normalised_image, sitk.sitkFloat32))
-vis.show_image(grad_image, 'grad', False)
+#vis.show_image(grad_image, 'grad', False)
 
 # TODO:  get every 50th pixel as seedpoint
 # set seedpoints manually
 seeds = vis.show_and_return_markers(grad_image, 'Set Seedpoints')
+
+
 
 # compute thresh image with lower = 200, upper = 500 for all seedpoints
 thresh_filter = sitk.ConnectedThresholdImageFilter()
@@ -46,7 +53,7 @@ open_filter = sitk.BinaryMorphologicalOpeningImageFilter()
 open_image = open_filter.Execute(thresh_image)
 close_filter = sitk.BinaryMorphologicalClosingImageFilter()
 close_image = close_filter.Execute(open_image)
-vis.show_image(close_image,'opening&closing', False)
+#vis.show_image(close_image,'opening&closing', False)
 
 # label the connected components
 label_filter = sitk.BinaryImageToLabelMapFilter()
@@ -59,12 +66,17 @@ relabel_filter.SortByObjectSizeOn()
 relabel_filter.Execute(close_image)
 relabel_filter.SetMinimumObjectSize(relabel_filter.GetSizeOfObjectsInPixels()[0])
 relabel_image = relabel_filter.Execute(close_image)
-vis.show_image(relabel_image, 'segmentation', True)
+#vis.show_image(relabel_image, 'segmentation', True)
 
 # get changes made by key-actions
-relabel_image = sitk.ReadImage('segmentation.nii.gz')
+#relabel_image = sitk.ReadImage('segmentation.nii.gz')
 
 # show the input_image with the segmentation
 vis.show_image_with_mask(input_image, relabel_image, 'segmentation with image', 'b', False)
+
+# get the dice from our segmentation and given segmentation
+measures = sitk.LabelOverlapMeasuresImageFilter()
+measures.Execute(relabel_image,seg_image)
+print("Dice: ", measures.GetDiceCoefficient())
 
 # get changes after further key-actions
