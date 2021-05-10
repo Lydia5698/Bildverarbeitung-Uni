@@ -34,10 +34,17 @@ grad_filter.SetTimeStep(0.05)
 grad_image = grad_filter.Execute(sitk.Cast(normalised_image, sitk.sitkFloat32))
 #vis.show_image(grad_image, 'grad', False)
 
-# TODO:  get every 50th pixel as seedpoint
-# set seedpoints manually
-seeds = vis.show_and_return_markers(grad_image, 'Set Seedpoints')
 
+# set seedpoints manually
+#seeds = vis.show_and_return_markers(grad_image, 'Set Seedpoints')
+
+
+#get every 5000th pixel as seedpoint
+arr = np.array(sitk.GetArrayViewFromImage(grad_image))
+seeds = []
+for idx, i in np.ndenumerate(arr):
+    if i % 5000 == 0:
+        seeds.append(idx)
 
 
 # compute thresh image with lower = 200, upper = 500 for all seedpoints
