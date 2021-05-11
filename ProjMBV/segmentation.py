@@ -108,23 +108,21 @@ casted_seg_image = cast.Execute(seg_image)
 
 #calculate Dice from our segmentation and given segmentation
 measures = sitk.LabelOverlapMeasuresImageFilter()
-hausdorff_Distance = sitk.HausdorffDistanceImageFilter()
-
 measures.Execute(relabel_image, casted_seg_image)
+
+hausdorff_Distance = sitk.HausdorffDistanceImageFilter()
 hausdorff_Distance.Execute(relabel_image, casted_seg_image)
+
 print("Dice: ", measures.GetDiceCoefficient())
 print("Jaccard: ", measures.GetJaccardCoefficient())
 print("Hausdorff: ", hausdorff_Distance.GetHausdorffDistance())
 
-vis.show_image_with_mask(input_image, seg_image, 'reference segmentation with image', 'b', False)
+#calculate the volume of the segmentation
+shape_stats = sitk.LabelShapeStatisticsImageFilter()
+shape_stats.Execute(relabel_image)
 
-# vor Änderung des Thresholds
-# 01 Hausdorff 12.0, Jaccard 0.6186 Dice 0.7644
-# 02 Hausdorff 24.5153, Jaccard 0.6357 Dice 0.7773
-# 05 Hausdorff 87.5957, Jaccard 0.2921 Dice 0.4521
-# 09 Hausdorff 47.1381, Jaccard 0.6688, Dice 0.8015
-# 10 War sehr dunkel funktioniert nicht mit eigenen Seedpoints Mit DWI Bild probiert:
-#    Hausdorff 34.1906, Jaccard 0.1585, Dice 0.2736
-# 12 Hausdorff 84.3030, Jaccard 0.0648, Dice 0.1217
-# 15 Hausdorff 61.0082, Jaccard 0.4768, Dice 0.6457
-# 22 War sehr dunkel funktioniert nicht mit eigenen Seedpoints
+for i in shape_stats.GetLabels():
+    size = shape_stats.GetPhysicalSize(i)
+print("Volume: ", size, "cm^3")
+
+vis.show_image_with_mask(input_image, seg_image, 'reference segmentation with image', 'b', False)
