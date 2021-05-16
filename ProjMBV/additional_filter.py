@@ -1,5 +1,6 @@
 import SimpleITK as sitk
 import numpy as np
+import sys
 
 import image_viewing as vis
 from typing import List
@@ -50,9 +51,12 @@ def seedpoints(image: sitk.Image) -> List[List[int]]:
             image (sitk.Image): brain-MRT image
         Returns: List of indexes of seedpoints.
     """
-    img_arr = np.array(sitk.GetArrayFromImage(image))
-    seeds = np.argwhere(img_arr > 490)
-    return seeds.tolist()
+    if len(sys.argv) > 2 and sys.argv[2] == '--manually':
+        return vis.show_and_return_markers(image, 'Set Seedpoints')
+    else:
+        img_arr = np.array(sitk.GetArrayFromImage(image))
+        seeds = np.argwhere(img_arr > 495)
+        return seeds.tolist()
 
 
 def threshold(image: sitk.Image, seeds: List[List[int]]) -> sitk.Image:
@@ -66,7 +70,7 @@ def threshold(image: sitk.Image, seeds: List[List[int]]) -> sitk.Image:
 
     thresh_filter = sitk.ConnectedThresholdImageFilter()
     thresh_filter.SetSeedList(seeds)
-    thresh_filter.SetLower(480)
+    thresh_filter.SetLower(490)
     thresh_filter.SetUpper(500)
     return thresh_filter.Execute(image)
 
@@ -98,7 +102,7 @@ def connected_component(image: sitk.Image) -> sitk.Image:
     if 1 not in sitk.GetArrayFromImage(image):
         return None
     biggest_label = relabel_filter.GetSizeOfObjectsInPixels()[0]
-    if biggest_label < 20:      # keine Ahnung, was hier der beste Wert ist
+    if biggest_label < 200:      # keine Ahnung, was hier der beste Wert ist
         return None
     relabel_filter.SetMinimumObjectSize(biggest_label)
     return relabel_filter.Execute(image)
@@ -113,6 +117,7 @@ def opening(image: sitk.Image) -> sitk.Image:
     """
 
     open_filter = sitk.BinaryMorphologicalOpeningImageFilter()
+    #open_filter.SetKernelRadius((3,3,3))
     open_image = open_filter.Execute(image)
     sitk.WriteImage(open_image, 'segmentation.nii.gz')
     return open_image
@@ -135,7 +140,7 @@ def closing(image: sitk.Image) -> sitk.Image:
 
 def hole_filling(image: sitk.Image) -> sitk.Image:
     """ Filling holes in a binary image.
-    This method is only accessible through pressing the f key.
+    This method is accessible through pressing the f key and is used by the segmentation pipeline.
         Parameters:
             image (sitk.Image): brain-MRT image
         Returns: sitk.Image with less or smaller holes
@@ -144,11 +149,26 @@ def hole_filling(image: sitk.Image) -> sitk.Image:
     hole_filter = sitk.VotingBinaryIterativeHoleFillingImageFilter()
     hole_filter.SetForegroundValue(1)
     hole_filter.SetBackgroundValue(0)
-    hole_filter.SetRadius(1)
-    hole_filter.SetMaximumNumberOfIterations(10)
+    hole_filter.SetRadius(2)
+    hole_filter.SetMaximumNumberOfIterations(20)
     hole_image = hole_filter.Execute(image)
     sitk.WriteImage(hole_image, 'segmentation.nii.gz')
     return hole_image
+
+
+def dilate(image:sitk.Image) -> sitk.Image:
+    """ Dilate a binary image.
+    This method is accessible through pressing the d key and is used by the segmentation pipeline.
+        Parameters:
+            image (sitk.Image): brain-MRT image
+        Returns: dilated sitk.Image
+    """
+
+    dilate_filter = sitk.BinaryDilateImageFilter()
+    #dilate_filter.SetKernelRadius((2,2,2))
+    dilate_image = dilate_filter.Execute(image)
+    sitk.WriteImage(dilate_image, 'segmentation.nii.gz')
+    return dilate_image
 
 
 def erode(image:sitk.Image) -> sitk.Image:
@@ -163,17 +183,3 @@ def erode(image:sitk.Image) -> sitk.Image:
     erode_image = erode_filter.Execute(image)
     sitk.WriteImage(erode_image, 'segmentation.nii.gz')
     return erode_image
-
-
-def dilate(image:sitk.Image) -> sitk.Image:
-    """ Dilate a binary image.
-    This method is only accessible through pressing the d key.
-        Parameters:
-            image (sitk.Image): brain-MRT image
-        Returns: dilated sitk.Image
-    """
-
-    dilate_filter = sitk.BinaryDilateImageFilter()
-    dilate_image = dilate_filter.Execute(image)
-    sitk.WriteImage(dilate_image, 'segmentation.nii.gz')
-    return dilate_image
