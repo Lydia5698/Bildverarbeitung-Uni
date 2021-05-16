@@ -27,6 +27,7 @@ seeds = filter.seedpoints(grad_image)
 # compute thresh image with lower = 200, upper = 500 for all seedpoints
 thresh_image = filter.threshold(grad_image, seeds)
 #vis.show_image(thresh_image, 'thresh', False)
+#vis.show_image_with_mask(normalised_image, thresh_image)
 
 # opening and closing on the image
 open_image = filter.opening(thresh_image)
@@ -46,7 +47,7 @@ relabel_image = filter.connected_component(cast.Execute(label_image))
 # test, if there is any label selected and if it is big enough.
 if relabel_image is not None:
     sitk.WriteImage(relabel_image, 'segmentation.nii.gz')
-    vis.show_image(relabel_image, 'Flair segmentation', True)
+    #vis.show_image(relabel_image, 'Flair segmentation', True)
 
     # get changes made by key-actions
     relabel_image = sitk.ReadImage('segmentation.nii.gz')
