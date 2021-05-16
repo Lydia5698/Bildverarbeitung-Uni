@@ -13,7 +13,7 @@ path = 'ISLES2015_Train/'+sys.argv[1]+'/VSD.Brain.'+sys.argv[1]+'.O.MR_Flair_reg
 input_image = sitk.ReadImage(path)
 #vis.show_image(input_image, 'input', False)
 
-# normalise image to [0,500] and remove measurement errors between (min, min+5) and (max-5,max)
+# normalise image to [0,500] and remove measurement errors below the 5th and above the 99th percentile
 normalised_image = filter.normalise(input_image)
 #vis.show_image(normalised_image, 'Flair normalised', False)
 
