@@ -55,7 +55,7 @@ def seedpoints(image: sitk.Image) -> List[List[int]]:
         return vis.show_and_return_markers(image, 'Set Seedpoints')
     else:
         img_arr = np.array(sitk.GetArrayFromImage(image))
-        seeds = np.argwhere(img_arr > 490)
+        seeds = np.argwhere(img_arr > 495)
         return seeds.tolist()
 
 
@@ -70,7 +70,7 @@ def threshold(image: sitk.Image, seeds: List[List[int]]) -> sitk.Image:
 
     thresh_filter = sitk.ConnectedThresholdImageFilter()
     thresh_filter.SetSeedList(seeds)
-    thresh_filter.SetLower(491)
+    thresh_filter.SetLower(490)
     thresh_filter.SetUpper(500)
     return thresh_filter.Execute(image)
 
