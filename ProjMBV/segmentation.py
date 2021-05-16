@@ -126,6 +126,6 @@ shape_stats.Execute(relabel_image)
 
 for i in shape_stats.GetLabels():
     size = shape_stats.GetPhysicalSize(i)
-print("Volume: ", size, "cm^3")
+print("Volume: ", size, "mm^3")
 
 vis.show_image_with_mask(input_image, seg_image, 'reference segmentation with image', 'b', False)
